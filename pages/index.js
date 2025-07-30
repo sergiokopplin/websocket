@@ -3,7 +3,8 @@ import { useState } from "react";
 import { useCall } from "../components/CallProvider";
 
 export default function Home() {
-  const { activeCall, isConnected } = useCall();
+  const { activeCall, isConnected, featureEnabled, setFeatureEnabled } =
+    useCall();
   const [loading, setLoading] = useState(false);
 
   const handleStartCall = async () => {
@@ -73,6 +74,44 @@ export default function Home() {
             </div>
           </div>
 
+          {/* Feature Flag Control */}
+          <div className="mb-8">
+            <h2 className="text-xl font-semibold mb-4">Feature Flag</h2>
+            <div className="flex items-center gap-4">
+              <label className="flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={featureEnabled}
+                  onChange={(e) => setFeatureEnabled(e.target.checked)}
+                  className="sr-only"
+                />
+                <div
+                  className={`relative inline-block w-12 h-6 rounded-full transition-colors ${
+                    featureEnabled ? "bg-green-500" : "bg-gray-300"
+                  }`}
+                >
+                  <div
+                    className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform ${
+                      featureEnabled ? "translate-x-6" : "translate-x-0"
+                    }`}
+                  />
+                </div>
+                <span className="ml-3 text-lg font-medium">
+                  Feature Flag {featureEnabled ? "Activated" : "Disabled"}
+                </span>
+              </label>
+            </div>
+
+            <div className="mt-2 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <p className="text-sm text-yellow-800">
+                <strong>Feature Flag:</strong> {featureEnabled ? "ON" : "OFF"} -
+                {featureEnabled
+                  ? "WebSocket connected, calls will be detected"
+                  : "WebSocket disconnected, no calls will be shown"}
+              </p>
+            </div>
+          </div>
+
           {/* Active Call */}
           <div className="mb-8">
             <h2 className="text-xl font-semibold mb-4">Active Call</h2>
@@ -135,7 +174,7 @@ export default function Home() {
             <div className="flex gap-4">
               <button
                 onClick={handleStartCall}
-                disabled={loading || !!activeCall}
+                disabled={loading || !!activeCall || !featureEnabled}
                 className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {loading ? "Starting..." : "Start Call"}
@@ -143,7 +182,7 @@ export default function Home() {
 
               <button
                 onClick={handleEndCall}
-                disabled={loading || !activeCall}
+                disabled={loading || !activeCall || !featureEnabled}
                 className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {loading ? "Ending..." : "End Call"}

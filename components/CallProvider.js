@@ -35,7 +35,8 @@ const CallStatusBarPortal = ({ call, onStopRecording }) => {
 };
 
 export const CallProvider = ({ children }) => {
-  const { callStatus, isConnected, sendMessage } = useWebSocket();
+  const [featureEnabled, setFeatureEnabled] = useState(true);
+  const { callStatus, isConnected, sendMessage } = useWebSocket(featureEnabled);
   const [activeCall, setActiveCall] = useState(null);
 
   useEffect(() => {
@@ -61,15 +62,19 @@ export const CallProvider = ({ children }) => {
     activeCall,
     isConnected,
     sendMessage,
+    featureEnabled,
+    setFeatureEnabled,
   };
 
   return (
     <CallContext.Provider value={contextValue}>
       {children}
-      <CallStatusBarPortal
-        call={activeCall}
-        onStopRecording={handleStopRecording}
-      />
+      {featureEnabled && (
+        <CallStatusBarPortal
+          call={activeCall}
+          onStopRecording={handleStopRecording}
+        />
+      )}
     </CallContext.Provider>
   );
 };

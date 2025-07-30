@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
-export const useWebSocket = () => {
+export const useWebSocket = (enabled) => {
   const [callStatus, setCallStatus] = useState(null);
   const [isConnected, setIsConnected] = useState(false);
   const ws = useRef(null);
@@ -95,7 +95,19 @@ export const useWebSocket = () => {
   }, []);
 
   useEffect(() => {
-    connect();
+    if (enabled) {
+      connect();
+    } else {
+      shouldReconnect.current = false;
+      if (reconnectTimeout.current) {
+        clearTimeout(reconnectTimeout.current);
+      }
+      if (ws.current) {
+        ws.current.close(1000, "Feature disabled");
+      }
+      setIsConnected(false);
+      setCallStatus(null);
+    }
 
     return () => {
       shouldReconnect.current = false;
@@ -106,7 +118,7 @@ export const useWebSocket = () => {
         ws.current.close(1000, "Component unmounting");
       }
     };
-  }, [connect]);
+  }, [connect, enabled]);
 
   return { callStatus, isConnected, sendMessage };
 };
