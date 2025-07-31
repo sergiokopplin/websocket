@@ -91,6 +91,29 @@ app.prepare().then(() => {
   // API Routes
   server.use(express.json());
 
+  // Endpoint to simulate call error
+  server.post("/api/call/error", (req, res) => {
+    if (currentCall) {
+      console.log("Simulating error for call:", currentCall.callId);
+
+      currentCall.status = "error";
+      currentCall.errorMessage = "Simulated call error: Connection lost";
+
+      broadcast({
+        type: "CALL_ERROR",
+        callId: currentCall.callId,
+        errorMessage: currentCall.errorMessage,
+      });
+
+      // Remove call after broadcast
+      setTimeout(() => {
+        currentCall = null;
+      }, 3000);
+    }
+
+    res.json({ success: true });
+  });
+
   // Endpoint to simulate call start (would be called by external service)
   server.post("/api/call/start", (req, res) => {
     const { expertName = "Dr. John Smith", expertId = "123" } = req.body;

@@ -55,6 +55,19 @@ export const useWebSocket = (enabled) => {
               setTimeout(() => setCallStatus(null), 3000);
               break;
 
+            case "CALL_ERROR":
+              setCallStatus((prev) =>
+                prev
+                  ? {
+                      ...prev,
+                      status: "error",
+                      errorMessage: data.errorMessage,
+                    }
+                  : null
+              );
+              setTimeout(() => setCallStatus(null), 3000);
+              break;
+
             case "CURRENT_CALL_STATE":
               if (data.hasActiveCall) {
                 setCallStatus({
