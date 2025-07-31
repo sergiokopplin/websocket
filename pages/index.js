@@ -7,7 +7,7 @@ export default function Home() {
     useCall();
   const [loading, setLoading] = useState(false);
 
-  const handleStartCall = async () => {
+  const handleStartCallForExpert = async (expertId, expertName) => {
     setLoading(true);
     try {
       const response = await fetch("/api/call/start", {
@@ -16,12 +16,14 @@ export default function Home() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          expertName: "Dr. Mary Santos",
+          expertId,
+          expertName,
+          cstId: "cst_current_user",
         }),
       });
 
       const result = await response.json();
-      console.log("Call started:", result);
+      console.log("Call started for expert:", expertId, result);
     } catch (error) {
       console.error("Error starting call:", error);
     } finally {
@@ -29,15 +31,19 @@ export default function Home() {
     }
   };
 
-  const handleEndCall = async () => {
+  const handleEndCallForExpert = async (expertId) => {
     setLoading(true);
     try {
       const response = await fetch("/api/call/end", {
         method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ expertId }),
       });
 
       const result = await response.json();
-      console.log("Call ended:", result);
+      console.log("Call ended for expert:", expertId, result);
     } catch (error) {
       console.error("Error ending call:", error);
     } finally {
@@ -155,6 +161,13 @@ export default function Home() {
                 Go to Another Page
               </Link>
 
+              <Link
+                href="/test-tabs"
+                className="inline-block px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+              >
+                Tab Test
+              </Link>
+
               <button
                 onClick={() => window.open("/another-page", "_blank")}
                 className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
@@ -168,25 +181,110 @@ export default function Home() {
             </p>
           </div>
 
+          {/* Multi-Expert Test */}
+          <div className="mb-8">
+            <h2 className="text-xl font-semibold mb-4">Multi-Expert Test</h2>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <h3 className="font-medium mb-2">Expert 123</h3>
+                <div className="flex gap-2">
+                  <Link
+                    href="/expert/123"
+                    className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+                  >
+                    Go to Expert 123
+                  </Link>
+                  <button
+                    onClick={() => window.open("/expert/123", "_blank")}
+                    className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+                  >
+                    New Tab Expert 123
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="font-medium mb-2">Expert 456</h3>
+                <div className="flex gap-2">
+                  <Link
+                    href="/expert/456"
+                    className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors"
+                  >
+                    Go to Expert 456
+                  </Link>
+                  <button
+                    onClick={() => window.open("/expert/456", "_blank")}
+                    className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition-colors"
+                  >
+                    New Tab Expert 456
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-4 p-3 bg-purple-50 border border-purple-200 rounded-lg">
+              <p className="text-sm text-purple-800">
+                <strong>Test:</strong> Open multiple tabs with different
+                experts, start a call for a specific expert and see that it only
+                appears in the correct tab!
+              </p>
+            </div>
+          </div>
+
           {/* Simulation Controls */}
           <div className="mb-8">
-            <h2 className="text-xl font-semibold mb-4">Call Simulation</h2>
-            <div className="flex gap-4">
-              <button
-                onClick={handleStartCall}
-                disabled={loading || !!activeCall || !featureEnabled}
-                className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                {loading ? "Starting..." : "Start Call"}
-              </button>
+            <h2 className="text-xl font-semibold mb-4">
+              Call Simulation by Expert
+            </h2>
 
-              <button
-                onClick={handleEndCall}
-                disabled={loading || !activeCall || !featureEnabled}
-                className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                {loading ? "Ending..." : "End Call"}
-              </button>
+            <div className="grid grid-cols-2 gap-6">
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <h3 className="font-semibold text-blue-800 mb-3">
+                  Expert 123 - Dr. John Smith
+                </h3>
+                <div className="space-y-2">
+                  <button
+                    onClick={() =>
+                      handleStartCallForExpert("123", "Dr. John Smith")
+                    }
+                    disabled={loading || activeCall?.expertId === "123"}
+                    className="w-full px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    Start Call Expert 123
+                  </button>
+                  <button
+                    onClick={() => handleEndCallForExpert("123")}
+                    disabled={loading || activeCall?.expertId !== "123"}
+                    className="w-full px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    End Call Expert 123
+                  </button>
+                </div>
+              </div>
+
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                <h3 className="font-semibold text-green-800 mb-3">
+                  Expert 456 - Dr. Mary Santos
+                </h3>
+                <div className="space-y-2">
+                  <button
+                    onClick={() =>
+                      handleStartCallForExpert("456", "Dr. Mary Santos")
+                    }
+                    disabled={loading || activeCall?.expertId === "456"}
+                    className="w-full px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    Start Call Expert 456
+                  </button>
+                  <button
+                    onClick={() => handleEndCallForExpert("456")}
+                    disabled={loading || activeCall?.expertId !== "456"}
+                    className="w-full px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    End Call Expert 456
+                  </button>
+                </div>
+              </div>
             </div>
 
             <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
@@ -215,6 +313,8 @@ export default function Home() {
               <li>• State recovery when reloading page</li>
               <li>• Automatic reconnection in case of disconnection</li>
               <li>• Draggable bar that works on all pages</li>
+              <li>• TypeScript support for better development experience</li>
+              <li>• Improved error handling and validation</li>
             </ul>
           </div>
         </div>

@@ -1,3 +1,4 @@
+import { useRouter } from "next/router";
 import {
   createContext,
   useCallback,
@@ -35,21 +36,145 @@ const CallStatusBarPortal = ({ call, onStopRecording }) => {
 };
 
 export const CallProvider = ({ children }) => {
+  const router = useRouter();
   const [featureEnabled, setFeatureEnabled] = useState(true);
   const { callStatus, isConnected, sendMessage } = useWebSocket(featureEnabled);
   const [activeCall, setActiveCall] = useState(null);
+  const [isInitialized, setIsInitialized] = useState(false);
 
+  // Get expertId from current route
+  const currentExpertId = router.query.id || router.query.expertId;
+
+  // Check for active call when loading the page
   useEffect(() => {
-    if (callStatus && !activeCall) {
-      console.log("New call detected:", callStatus);
-      setActiveCall(callStatus);
-    } else if (!callStatus && activeCall) {
-      console.log("Call ended");
+    const checkCurrentCall = async () => {
+      try {
+        const response = await fetch("/api/call/status");
+        const data = await response.json();
+
+        if (data.hasActiveCall && data.callInfo) {
+          console.log("Found active call on page load:", data.callInfo);
+
+          // If we're on a specific expert page, check if the call is for this expert
+          if (currentExpertId) {
+            if (data.callInfo.expertId === currentExpertId) {
+              setActiveCall({
+                ...data.callInfo,
+                startTime: new Date(data.callInfo.startTime),
+              });
+            }
+          } else {
+            // If we're on the main page, show any active call
+            setActiveCall({
+              ...data.callInfo,
+              startTime: new Date(data.callInfo.startTime),
+            });
+          }
+        }
+      } catch (error) {
+        console.error("Error checking current call:", error);
+      } finally {
+        setIsInitialized(true);
+      }
+    };
+
+    if (isConnected && !isInitialized) {
+      checkCurrentCall();
+    }
+  }, [isConnected, currentExpertId, isInitialized]);
+
+  // Update call when receiving updates via WebSocket
+  useEffect(() => {
+    if (!callStatus) return;
+
+    console.log("Received call status update:", callStatus);
+    console.log("Current expert ID:", currentExpertId);
+
+    if (!activeCall) {
+      // New call
+      if (currentExpertId) {
+        // If we're on a specific expert page, only show if it's for this expert
+        if (callStatus.expertId === currentExpertId) {
+          console.log("Setting active call for current expert:", callStatus);
+          setActiveCall(callStatus);
+        }
+      } else {
+        // If we're on the main page, show any call
+        console.log("Setting active call for main page:", callStatus);
+        setActiveCall(callStatus);
+      }
+    } else {
+      // Update existing call
+      if (currentExpertId) {
+        // If we're on a specific expert page
+        if (callStatus.expertId === currentExpertId) {
+          setActiveCall(callStatus);
+        } else {
+          // If the call is not for this expert, clear it
+          setActiveCall(null);
+        }
+      } else {
+        // If we're on the main page, update any call
+        setActiveCall(callStatus);
+      }
+    }
+  }, [callStatus, activeCall, currentExpertId]);
+
+  // Clear call when it ends
+  useEffect(() => {
+    if (callStatus === null && activeCall) {
+      console.log("Clearing active call");
       setActiveCall(null);
-    } else if (callStatus && activeCall) {
-      setActiveCall(callStatus);
     }
   }, [callStatus, activeCall]);
+
+  // Sync state between tabs using localStorage
+  useEffect(() => {
+    const handleStorageChange = (e) => {
+      if (e.key === "activeCall") {
+        try {
+          const callData = e.newValue ? JSON.parse(e.newValue) : null;
+          console.log("Storage change detected:", callData);
+
+          if (callData) {
+            // Check if the call is relevant for this page
+            if (currentExpertId) {
+              if (callData.expertId === currentExpertId) {
+                setActiveCall({
+                  ...callData,
+                  startTime: new Date(callData.startTime),
+                });
+              }
+            } else {
+              // Main page - show any call
+              setActiveCall({
+                ...callData,
+                startTime: new Date(callData.startTime),
+              });
+            }
+          } else {
+            setActiveCall(null);
+          }
+        } catch (error) {
+          console.error("Error parsing storage data:", error);
+        }
+      }
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
+  }, [currentExpertId]);
+
+  // Update localStorage when call changes
+  useEffect(() => {
+    if (activeCall) {
+      localStorage.setItem("activeCall", JSON.stringify(activeCall));
+      console.log("Updated localStorage with active call:", activeCall);
+    } else {
+      localStorage.removeItem("activeCall");
+      console.log("Removed active call from localStorage");
+    }
+  }, [activeCall]);
 
   const handleStopRecording = useCallback(() => {
     if (activeCall) {
@@ -69,7 +194,7 @@ export const CallProvider = ({ children }) => {
   return (
     <CallContext.Provider value={contextValue}>
       {children}
-      {featureEnabled && (
+      {featureEnabled && activeCall && (
         <CallStatusBarPortal
           call={activeCall}
           onStopRecording={handleStopRecording}

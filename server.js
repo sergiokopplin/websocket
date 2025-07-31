@@ -93,10 +93,11 @@ app.prepare().then(() => {
 
   // Endpoint to simulate call start (would be called by external service)
   server.post("/api/call/start", (req, res) => {
-    const { expertName = "Dr. John Smith" } = req.body;
+    const { expertName = "Dr. John Smith", expertId = "123" } = req.body;
 
     currentCall = {
       callId: `call_${Date.now()}`,
+      expertId: expertId,
       expertName,
       startTime: new Date().toISOString(),
       status: "recording",

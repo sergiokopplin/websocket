@@ -35,6 +35,7 @@ export const useWebSocket = (enabled) => {
             case "CALL_STARTED":
               setCallStatus({
                 callId: data.callId,
+                expertId: data.expertId,
                 expertName: data.expertName,
                 startTime: new Date(data.startTime),
                 status: "recording",
@@ -64,6 +65,9 @@ export const useWebSocket = (enabled) => {
                 setCallStatus(null);
               }
               break;
+
+            default:
+              console.warn("Unknown WebSocket message type:", data.type);
           }
         } catch (error) {
           console.error("Error parsing WebSocket message:", error);
@@ -91,6 +95,8 @@ export const useWebSocket = (enabled) => {
   const sendMessage = useCallback((message) => {
     if (ws.current?.readyState === WebSocket.OPEN) {
       ws.current.send(JSON.stringify(message));
+    } else {
+      console.warn("WebSocket not connected, cannot send message:", message);
     }
   }, []);
 
