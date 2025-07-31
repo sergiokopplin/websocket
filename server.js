@@ -7,9 +7,10 @@ const dev = process.env.NODE_ENV !== "production";
 const app = next({ dev });
 const handle = app.getRequestHandler();
 
-// Global call state (in production, use Redis/Database)
+// Global state (in production, use Redis/Database)
 let currentCall = null;
 let clients = new Set();
+let globalConsent = false;
 
 app.prepare().then(() => {
   const server = express();
@@ -43,6 +44,14 @@ app.prepare().then(() => {
         type: "CURRENT_CALL_STATE",
         hasActiveCall: !!currentCall,
         callInfo: currentCall,
+      })
+    );
+
+    // Send current consent state
+    ws.send(
+      JSON.stringify({
+        type: "CONSENT_UPDATE",
+        globalConsent,
       })
     );
 
@@ -91,6 +100,71 @@ app.prepare().then(() => {
   // API Routes
   server.use(express.json());
 
+  // Endpoint to update global recording consent
+  server.post("/api/consent", (req, res) => {
+    const { consent } = req.body;
+    console.log("Updating global consent:", consent);
+
+    globalConsent = consent;
+
+    // If consent is removed, end any active call
+    if (!consent && currentCall) {
+      console.log("Consent removed, ending active call");
+
+      broadcast({
+        type: "CALL_ENDED",
+        callId: currentCall.callId,
+        reason: "consent_removed",
+      });
+
+      currentCall = null;
+    }
+
+    // Broadcast consent state to all clients
+    broadcast({
+      type: "CONSENT_UPDATE",
+      globalConsent,
+    });
+
+    res.json({ success: true });
+  });
+
+  // Get current consent state
+  server.get("/api/consent", (req, res) => {
+    res.json({
+      success: true,
+      globalConsent,
+    });
+  });
+
+  // Endpoint to update recording consent
+  server.post("/api/call/consent", (req, res) => {
+    const { consent } = req.body;
+
+    if (currentCall) {
+      console.log(
+        "Updating consent for call:",
+        currentCall.callId,
+        "consent:",
+        consent
+      );
+
+      currentCall.isRecordingConsented = consent;
+      currentCall.status = consent ? "recording" : "waiting_consent";
+      currentCall.recordingEnabled = consent;
+
+      broadcast({
+        type: "RECORDING_CONSENT_UPDATE",
+        callId: currentCall.callId,
+        isRecordingConsented: consent,
+        status: currentCall.status,
+        recordingEnabled: consent,
+      });
+    }
+
+    res.json({ success: true });
+  });
+
   // Endpoint to simulate call error
   server.post("/api/call/error", (req, res) => {
     if (currentCall) {
@@ -116,6 +190,14 @@ app.prepare().then(() => {
 
   // Endpoint to simulate call start (would be called by external service)
   server.post("/api/call/start", (req, res) => {
+    // Check if recording is consented
+    if (!globalConsent) {
+      return res.status(403).json({
+        success: false,
+        error: "Recording consent required",
+      });
+    }
+
     const { expertName = "Dr. John Smith", expertId = "123" } = req.body;
 
     currentCall = {
@@ -123,7 +205,9 @@ app.prepare().then(() => {
       expertId: expertId,
       expertName,
       startTime: new Date().toISOString(),
-      status: "recording",
+      status: "waiting_consent", // Start in waiting consent state
+      isRecordingConsented: false,
+      recordingEnabled: false,
     };
 
     console.log("Starting call:", currentCall);

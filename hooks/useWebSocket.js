@@ -68,6 +68,20 @@ export const useWebSocket = (enabled) => {
               setTimeout(() => setCallStatus(null), 3000);
               break;
 
+            case "CONSENT_UPDATE":
+              if (data.globalConsent !== undefined) {
+                setCallStatus((prev) =>
+                  prev
+                    ? {
+                        ...prev,
+                        isRecordingConsented: data.globalConsent,
+                        recordingEnabled: data.globalConsent,
+                      }
+                    : null
+                );
+              }
+              break;
+
             case "CURRENT_CALL_STATE":
               if (data.hasActiveCall) {
                 setCallStatus({

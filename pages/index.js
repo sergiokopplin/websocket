@@ -1,10 +1,17 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useCall } from "../components/CallProvider";
+import { ConsentSwitch } from "../components/ConsentSwitch";
 
 export default function Home() {
-  const { activeCall, isConnected, featureEnabled, setFeatureEnabled } =
-    useCall();
+  const {
+    activeCall,
+    isConnected,
+    featureEnabled,
+    setFeatureEnabled,
+    handleConsentChange,
+    globalConsent,
+  } = useCall();
   const [loading, setLoading] = useState(false);
 
   const handleStartCallForExpert = async (expertId, expertName) => {
@@ -80,6 +87,34 @@ export default function Home() {
             </div>
           </div>
 
+          {/* Recording Consent */}
+          <div className="mb-8">
+            <h2 className="text-xl font-semibold mb-4">Recording Consent</h2>
+            <div className="bg-white border border-gray-200 rounded-lg p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600 mb-2">
+                    Enable recording for all calls. You must consent before any
+                    recording can start.
+                  </p>
+                  <ConsentSwitch
+                    isEnabled={globalConsent}
+                    onChange={handleConsentChange}
+                  />
+                </div>
+                <div
+                  className={`px-4 py-2 rounded-full text-sm font-medium ${
+                    globalConsent
+                      ? "bg-green-100 text-green-800"
+                      : "bg-yellow-100 text-yellow-800"
+                  }`}
+                >
+                  {globalConsent ? "Recording Enabled" : "Recording Disabled"}
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Feature Flag Control */}
           <div className="mb-8">
             <h2 className="text-xl font-semibold mb-4">Feature Flag</h2>
@@ -150,6 +185,37 @@ export default function Home() {
               </div>
             )}
           </div>
+
+          {/* Recording Consent */}
+          {activeCall && (
+            <div className="mb-8">
+              <h2 className="text-xl font-semibold mb-4">Recording Consent</h2>
+              <div className="bg-white border border-gray-200 rounded-lg p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600 mb-2">
+                      Control recording for the current call
+                    </p>
+                    <ConsentSwitch
+                      isEnabled={activeCall.isRecordingConsented}
+                      onChange={handleConsentChange}
+                    />
+                  </div>
+                  <div
+                    className={`px-4 py-2 rounded-full text-sm font-medium ${
+                      activeCall.isRecordingConsented
+                        ? "bg-green-100 text-green-800"
+                        : "bg-yellow-100 text-yellow-800"
+                    }`}
+                  >
+                    {activeCall.status === "waiting_consent"
+                      ? "Waiting for Consent"
+                      : "Recording Active"}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className="mb-8">
             <h2 className="text-xl font-semibold mb-4">Navigation</h2>
@@ -247,7 +313,11 @@ export default function Home() {
                     onClick={() =>
                       handleStartCallForExpert("123", "Dr. John Smith")
                     }
-                    disabled={loading || activeCall?.expertId === "123"}
+                    disabled={
+                      loading ||
+                      activeCall?.expertId === "123" ||
+                      !globalConsent
+                    }
                     className="w-full px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
                     Start Call Expert 123
@@ -271,7 +341,11 @@ export default function Home() {
                     onClick={() =>
                       handleStartCallForExpert("456", "Dr. Mary Santos")
                     }
-                    disabled={loading || activeCall?.expertId === "456"}
+                    disabled={
+                      loading ||
+                      activeCall?.expertId === "456" ||
+                      !globalConsent
+                    }
                     className="w-full px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
                     Start Call Expert 456

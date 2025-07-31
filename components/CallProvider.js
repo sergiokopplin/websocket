@@ -41,6 +41,24 @@ export const CallProvider = ({ children }) => {
   const { callStatus, isConnected, sendMessage } = useWebSocket(featureEnabled);
   const [activeCall, setActiveCall] = useState(null);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [globalConsent, setGlobalConsent] = useState(false);
+
+  // Check initial consent state
+  useEffect(() => {
+    const checkConsent = async () => {
+      try {
+        const response = await fetch("/api/consent");
+        const data = await response.json();
+        if (data.success) {
+          setGlobalConsent(data.globalConsent);
+        }
+      } catch (error) {
+        console.error("Error checking consent state:", error);
+      }
+    };
+
+    checkConsent();
+  }, []);
 
   // Get expertId from current route
   const currentExpertId = router.query.id || router.query.expertId;
@@ -183,12 +201,27 @@ export const CallProvider = ({ children }) => {
     }
   }, [activeCall, sendMessage]);
 
+  const handleConsentChange = useCallback(async (newConsent) => {
+    try {
+      await fetch("/api/consent", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ consent: newConsent }),
+      });
+      setGlobalConsent(newConsent);
+    } catch (error) {
+      console.error("Error updating consent:", error);
+    }
+  }, []);
+
   const contextValue = {
     activeCall,
     isConnected,
     sendMessage,
     featureEnabled,
     setFeatureEnabled,
+    handleConsentChange,
+    globalConsent,
   };
 
   return (

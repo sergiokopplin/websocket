@@ -88,6 +88,8 @@ export const CallStatusBar = ({ call, onStopRecording }) => {
 
   const getStatusColor = () => {
     switch (call.status) {
+      case "waiting_consent":
+        return "bg-yellow-600";
       case "recording":
         return "bg-red-600";
       case "transcribing":
@@ -103,6 +105,8 @@ export const CallStatusBar = ({ call, onStopRecording }) => {
 
   const getStatusText = () => {
     switch (call.status) {
+      case "waiting_consent":
+        return "Waiting for Consent";
       case "recording":
         return "Recording";
       case "transcribing":
@@ -158,38 +162,40 @@ export const CallStatusBar = ({ call, onStopRecording }) => {
           )}
         </div>
 
-        {call.status === "recording" ? (
-          <div className="flex gap-2">
+        <div className="flex items-center gap-4">
+          {call.status === "recording" ? (
+            <div className="flex gap-2">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  fetch("/api/call/error", { method: "POST" });
+                }}
+                className="bg-red-900 hover:bg-red-950 px-3 py-1 rounded text-xs font-medium transition-colors"
+                style={{ pointerEvents: "auto" }}
+              >
+                Simulate Error
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onStopRecording();
+                }}
+                className="bg-red-700 hover:bg-red-800 px-3 py-1 rounded text-xs font-medium transition-colors"
+                style={{ pointerEvents: "auto" }}
+              >
+                Stop Recording
+              </button>
+            </div>
+          ) : (
             <button
-              onClick={(e) => {
-                e.stopPropagation();
-                fetch("/api/call/error", { method: "POST" });
-              }}
-              className="bg-red-900 hover:bg-red-950 px-3 py-1 rounded text-xs font-medium transition-colors"
+              className="bg-red-700 hover:bg-red-800 px-3 py-1 rounded text-xs font-medium transition-colors opacity-50 cursor-not-allowed"
+              disabled
               style={{ pointerEvents: "auto" }}
             >
-              Simulate Error
+              {call.status === "error" ? "Call Error" : "End Call"}
             </button>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onStopRecording();
-              }}
-              className="bg-red-700 hover:bg-red-800 px-3 py-1 rounded text-xs font-medium transition-colors"
-              style={{ pointerEvents: "auto" }}
-            >
-              Stop Recording
-            </button>
-          </div>
-        ) : (
-          <button
-            className="bg-red-700 hover:bg-red-800 px-3 py-1 rounded text-xs font-medium transition-colors opacity-50 cursor-not-allowed"
-            disabled
-            style={{ pointerEvents: "auto" }}
-          >
-            {call.status === "error" ? "Call Error" : "End Call"}
-          </button>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );
