@@ -6,6 +6,16 @@
 - Tech Stack: Next.js with SSR
 - Components should be compatible with SSR architecture
 
+## Open Questions & Technical Decisions
+
+- Meeting needed with Calls Team to understand:
+  - Available API functionality
+  - Integration points
+  - Real-time capabilities
+- Storage architecture decisions pending:
+  - Call metadata and history confirmed for Experts API
+  - Transcript storage location to be discussed (might be moved to different service)
+
 ## System Architecture
 
 ### Components Flow
@@ -36,7 +46,7 @@
    - Domain-specific backend
    - WebSocket support layer
    - Persists call metadata and history
-   - Stores transcription content
+   - Stores transcription content (location TBD)
    - Proxies real-time data from Calls Team API
    - Queries internal API for expert recording consent
    - No direct real-time data generation
@@ -52,6 +62,20 @@
    - Emits real-time events (call status, etc)
    - Processes manual stop commands
 
+### Call Flow States
+
+1. Call Initiation
+
+   - Can be initiated by either CST or Expert
+   - Recording starts automatically when call detected
+   - Based on CST and Expert IDs
+
+2. Call Termination Scenarios
+   - CST hangs up
+   - Expert hangs up
+   - CST manually ends recording
+   - Call interrupted by technical issues
+
 ### Real-time Data Flow
 
 - Calls Team API → Experts API → Redelivery SSR → Frontend
@@ -63,6 +87,7 @@
   - Recording status changes
   - Transcription progress
   - Manual stop events
+  - Call termination events
 
 ### Call Status Widget States
 
@@ -80,7 +105,7 @@
    - Manual stop option available
 
 3. Transcribing Call
-   - After call ends (automatic or manual)
+   - After call ends (any termination scenario)
    - Shows transcription progress
    - Maintains expert context
 
@@ -121,8 +146,7 @@
 
 ### Data Persistence (Experts API)
 
-- Call metadata
-- Transcription content
+- Call metadata (including termination reason)
 - Call history data
 - Expert information related to calls
 - No real-time data persistence needed
@@ -130,11 +154,10 @@
 - Stop reason tracking
 - Transcription metadata
 - Timestamp information
+- Transcription content (storage location TBD)
 
 ## Notes
 
-- All implementation will be done in English
-- This document will be updated as we progress with the implementation
 - Frontend implementation will be done with mock data initially
 - Integration points will be clearly marked for future API implementation
 - Real-time data comes from Calls Team API, proxied through Experts API
@@ -145,3 +168,5 @@
 - Navigation maintains expert context across all pages
 - Confirmation required before ending recording
 - Transcription history available per expert
+- Calls can be initiated by either CST or Expert
+- No PTO data storage needed for this feature
