@@ -20,7 +20,7 @@
 
    - Real-time call status display
    - WebSocket connection for real-time updates
-   - Feature flag management
+   - Feature flag management ("Recorded_and_Transcribed_Vetting_Calls")
    - Cross-page state management
    - Error handling and user feedback
    - Drag and drop functionality
@@ -96,20 +96,37 @@
    - Shows transcription progress
    - Maintains expert context
 
-### Transcription Side Panel
+### UI Components
 
-- Access
-  - Available within expert page
-  - Opened via "View Transcript" button
-  - Shows transcription history for current expert
-- Features
-  - List of past call recordings
-  - Search functionality
-  - Chronological organization
-  - Call metadata display
-  - Selected call transcription content
-  - Timestamp information
-  - Speaker identification
+1. Call Status Bar
+
+   - Black bar design
+   - Shows expert name
+   - Displays call duration timer
+   - Grab handle icon appears on hover
+   - Draggable functionality
+   - Visible across all Delivery pages
+   - Position persists during navigation
+
+2. Transcript Button
+
+   - Located above Career History Side Panel
+   - Only visible after call is transcribed
+   - Opens transcript side panel
+
+3. Transcript Side Panel
+   - List of past recordings
+   - Search functionality
+   - Chronological organization
+   - Dropdown for transcript selection
+   - Labels: "{Month Day, Year, Time Stamp}"
+   - Speaker identification:
+     - CST: name and face above quotes
+     - Expert: name and icon above quotes
+   - Timestamp for each quote
+   - Transcript merging rules:
+     - < 60 minutes: append with divider
+     - > 60 minutes: new transcript entry
 
 ### Error Notifications (Toast Messages)
 
