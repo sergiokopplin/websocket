@@ -21,7 +21,7 @@
    - Error handling and user feedback
    - Drag and drop functionality
    - Manual recording control with confirmation
-   - Transcription history view
+   - Transcription history view in side panel
    - Cross-page navigation handling
 
 2. Redelivery SSR
@@ -42,7 +42,7 @@
    - No direct real-time data generation
    - Error reporting and handling
    - Handles manual stop requests
-   - Manages transcription storage
+   - Manages transcription storage and retrieval
 
 4. Calls Team API (External Service)
    - Source of real-time call data
@@ -83,6 +83,21 @@
    - After call ends (automatic or manual)
    - Shows transcription progress
    - Maintains expert context
+
+### Transcription Side Panel
+
+- Access
+  - Available within expert page
+  - Opened via "View Transcript" button
+  - Shows transcription history for current expert
+- Single View Features
+  - List of past call recordings
+  - Search functionality for past calls
+  - Chronological organization
+  - Call metadata display (date, duration, etc)
+  - Selected call transcription content
+  - Timestamp information
+  - Speaker identification
 
 ### Error Notifications (Toast Messages)
 
@@ -129,3 +144,4 @@
 - Cross-page functionality requires robust state management
 - Navigation maintains expert context across all pages
 - Confirmation required before ending recording
+- Transcription history available per expert
