@@ -5,12 +5,59 @@
 - Implementation will be done in the Redelivery project
 - Tech Stack: Next.js with SSR
 
+## Jobs To Be Done (JTBD)
+
+1. Feature Flag
+
+   - "We want to beta test this feature"
+   - Create feature flag called "Recorded_and_Transcribed_Vetting_Calls"
+
+2. Call Status
+
+   - "As a user, I want to know the status of my call with an expert"
+   - Black bar with real-time status when call is live
+   - Expert consent required
+
+3. Call Information
+
+   - "As a user, I want to know who I am speaking to"
+   - Display expert name in status bar
+   - "As a user, I want to know how long I have been on the phone"
+   - Show call duration timer
+
+4. Recording Control
+
+   - "As a user, I want to be able to stop the recording"
+   - Red button on right side of status bar
+   - Note: Considering change to "end call" instead of "stop recording"
+
+5. UI Flexibility
+
+   - "As a user, I want to be able to move the call status bar if it's blocking content"
+   - Draggable bar with grab handle on hover
+   - "As a user, I want to see the status bar on any Delivery page"
+   - Cross-page visibility and new tab support
+
+6. Transcript Access
+
+   - "As a user, I want to access my vetting call transcript"
+   - Widget above Career History Side Panel
+   - "As a user, I want my transcripts organized by call"
+   - Chronological list with time-based merging rules
+
 ## Open Questions & Technical Decisions
 
 - Meeting needed with Calls Team to understand available API functionality
-- Storage decisions:
-  - Call metadata and history in Experts API
-  - Transcript storage location to be discussed
+- Primary Storage Plan (Calls Team API):
+  - Call metadata and history
+  - Transcription content and management
+  - Audio recordings
+- Backup Storage Plan (Experts API):
+  - Call metadata and history
+  - Transcription content
+  - Expert consent status
+  - Call relationships and context
+  - Everything except audio recordings
 
 ## System Architecture
 
@@ -26,6 +73,7 @@
    - Drag and drop functionality
    - Manual recording control with confirmation
    - Transcription history view in side panel
+   - Transcription merge presentation logic
 
 2. Redelivery SSR
 
@@ -37,11 +85,10 @@
 3. Experts API
 
    - WebSocket support layer
-   - Persists call metadata and history
-   - Stores transcription content (location TBD)
    - Proxies real-time data from Calls Team API
    - Queries internal API for expert consent
    - Handles manual stop requests
+   - Proxies transcription requests
 
 4. Calls Team API (External Service)
    - Source of real-time call data
@@ -49,6 +96,8 @@
    - Manages recordings
    - Provides transcription service
    - Emits real-time events
+   - Stores call metadata and history
+   - Manages transcription storage and retrieval
 
 ### Call Flow States
 
@@ -104,6 +153,7 @@
    - Shows expert name
    - Displays call duration timer
    - Grab handle icon appears on hover
+   - Red stop/end button on right side
    - Draggable functionality
    - Visible across all Delivery pages
    - Position persists during navigation
@@ -124,9 +174,9 @@
      - CST: name and face above quotes
      - Expert: name and icon above quotes
    - Timestamp for each quote
-   - Transcript merging rules:
-     - < 60 minutes: append with divider
-     - > 60 minutes: new transcript entry
+   - Visual merge rules:
+     - Transcripts < 60 minutes apart: show merged with divider
+     - Transcripts > 60 minutes apart: show as separate entries
 
 ### Error Notifications (Toast Messages)
 
@@ -143,7 +193,9 @@
 - "Back to Expert" navigation when not on expert page
 - Modal persists across pages until action taken
 
-### Data Persistence (Experts API)
+### Data Storage
+
+Primary Plan (Calls Team API):
 
 - Call metadata (including termination reason)
 - Call history data
@@ -152,7 +204,22 @@
 - Stop reason tracking
 - Transcription metadata
 - Timestamp information
-- Transcription content (storage location TBD)
+- Transcription content
+- Audio recordings
+
+Backup Plan (Experts API):
+
+- Call metadata (including termination reason)
+- Call history data
+- Expert information related to calls
+- Error logs
+- Stop reason tracking
+- Transcription metadata
+- Timestamp information
+- Transcription content
+- Consent status history
+- Call relationships
+- No audio storage
 
 ## Notes
 
@@ -164,3 +231,4 @@
 - Cross-page functionality requires robust state management
 - Confirmation required before ending recording
 - No PTO data storage needed for this feature
+- Backup plan ready for data storage in Experts API if needed
